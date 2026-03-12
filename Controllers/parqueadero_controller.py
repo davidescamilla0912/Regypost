@@ -1,23 +1,29 @@
 from flask import request, jsonify
+from flask_jwt_extended import jwt_required
 from Models.parqueadero_model import ParqueaderoModel
 
 model = ParqueaderoModel()
 
+@jwt_required()
 def get_all_parqueadero():
     return jsonify(model.get_all()), 200
 
+@jwt_required()
 def get_parqueadero(id):
     registro = model.get_by_id(id)
     if not registro:
         return jsonify({"error": "Registro no encontrado"}), 404
     return jsonify(registro), 200
 
+@jwt_required()
 def get_parqueadero_activos():
     return jsonify(model.get_activos()), 200
 
+@jwt_required()
 def get_parqueadero_placa(placa):
     return jsonify(model.get_by_placa(placa)), 200
 
+@jwt_required()
 def create_parqueadero():
     data = request.json
     if not data or not data.get('placa') or not data.get('hora_entrada'):
@@ -25,6 +31,7 @@ def create_parqueadero():
     new_id = model.create(data)
     return jsonify({"mensaje": "Entrada registrada", "id": new_id}), 201
 
+@jwt_required()
 def registrar_salida(id):
     data = request.json
     if not data or not data.get('hora_salida'):
@@ -34,6 +41,7 @@ def registrar_salida(id):
         return jsonify({"error": "Registro no encontrado"}), 404
     return jsonify({"mensaje": "Salida registrada"}), 200
 
+@jwt_required()
 def delete_parqueadero(id):
     affected = model.delete(id)
     if not affected:

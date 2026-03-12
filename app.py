@@ -1,4 +1,8 @@
 from flask import Flask
+from flask_jwt_extended import JWTManager
+from Config import JWT_SECRET_KEY
+
+from Routes.auth_routes import auth_bp
 from Routes.cliente_routes import cliente_bp
 from Routes.habitacion_routes import habitacion_bp
 from Routes.empleado_routes import empleado_bp
@@ -8,6 +12,11 @@ from Routes.inventario_routes import inventario_bp
 from Routes.gasto_parqueadero_caja_routes import gasto_parqueadero_caja_bp
 
 app = Flask(__name__)
+app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
+
+jwt = JWTManager(app)
+
+app.register_blueprint(auth_bp)
 app.register_blueprint(cliente_bp)
 app.register_blueprint(habitacion_bp)
 app.register_blueprint(empleado_bp)
