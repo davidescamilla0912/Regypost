@@ -2,6 +2,19 @@ from database import get_connection
 
 class PagoModel:
 
+    def get_all(self):
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT id, reserva_id, empleado_id, monto, metodo, referencia, fecha_pago, notas
+            FROM pagos
+            ORDER BY fecha_pago DESC, id DESC
+        """)
+        result = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return result
+
     def get_by_reserva(self, reserva_id):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)

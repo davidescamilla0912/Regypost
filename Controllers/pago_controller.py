@@ -5,6 +5,14 @@ from utils.decorators import requiere_permiso
 model = PagoModel()
 
 @requiere_permiso('pagos.registrar')
+def get_pagos():
+    try:
+        pagos = model.get_all()
+        return jsonify({"data": pagos}), 200
+    except Exception:
+        return jsonify({"mensaje": "Error interno al listar pagos"}), 500
+
+@requiere_permiso('pagos.registrar')
 def get_pagos_reserva(reserva_id):
     return jsonify(model.get_by_reserva(reserva_id)), 200
 

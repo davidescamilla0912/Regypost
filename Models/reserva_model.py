@@ -1,4 +1,5 @@
 from database import get_connection
+import mysql.connector
 
 class ReservaModel:
 
@@ -174,12 +175,33 @@ class ReservaModel:
     def delete(self, id):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM reservas WHERE id = %s", (id,))
-        conn.commit()
-        affected = cursor.rowcount
-        cursor.close()
-        conn.close()
-        return affected
+        try:
+            # Bloquear filas hijas para mantener un orden consistente de lock.
+            cursor.execute(
+                "SELECT habitacion_id FROM reserva_habitaciones WHERE reserva_id = %s FOR UPDATE",
+                (id,)
+            )
+            habitaciones = [row[0] for row in cursor.fetchall()]
+
+            cursor.execute("DELETE FROM reserva_habitaciones WHERE reserva_id = %s", (id,))
+
+            if habitaciones:
+                placeholders = ", ".join(["%s"] * len(habitaciones))
+                cursor.execute(
+                    f"UPDATE habitaciones SET estado = 'disponible' WHERE id IN ({placeholders})",
+                    tuple(habitaciones)
+                )
+
+            cursor.execute("DELETE FROM reservas WHERE id = %s", (id,))
+            affected = cursor.rowcount
+            conn.commit()
+            return affected
+        except mysql.connector.Error:
+            conn.rollback()
+            raise
+        finally:
+            cursor.close()
+            conn.close()
 
     # --- Habitaciones de la reserva ---
     def get_habitaciones(self, reserva_id):
@@ -201,40 +223,50 @@ class ReservaModel:
     def agregar_habitacion(self, reserva_id, data):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO reserva_habitaciones
-                (reserva_id, habitacion_id, precio_noche)
-            VALUES (%s, %s, %s)
-        """, (
-            reserva_id,
-            data['habitacion_id'],
-            data.get('precio_noche', 0)
-        ))
-        # Marcar habitacion como ocupada
-        cursor.execute(
-            "UPDATE habitaciones SET estado = 'ocupada' WHERE id = %s",
-            (data['habitacion_id'],)
-        )
-        conn.commit()
-        new_id = cursor.lastrowid
-        cursor.close()
-        conn.close()
-        return new_id
+        try:
+            cursor.execute("""
+                INSERT INTO reserva_habitaciones
+                    (reserva_id, habitacion_id, precio_noche)
+                VALUES (%s, %s, %s)
+            """, (
+                reserva_id,
+                data['habitacion_id'],
+                data.get('precio_noche', 0)
+            ))
+            new_id = cursor.lastrowid
+
+            cursor.execute(
+                "UPDATE habitaciones SET estado = 'ocupada' WHERE id = %s",
+                (data['habitacion_id'],)
+            )
+            conn.commit()
+            return new_id
+        except mysql.connector.Error:
+            conn.rollback()
+            raise
+        finally:
+            cursor.close()
+            conn.close()
 
     def quitar_habitacion(self, reserva_id, habitacion_id):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
-            DELETE FROM reserva_habitaciones
-            WHERE reserva_id = %s AND habitacion_id = %s
-        """, (reserva_id, habitacion_id))
-        # Marcar habitacion como disponible
-        cursor.execute(
-            "UPDATE habitaciones SET estado = 'disponible' WHERE id = %s",
-            (habitacion_id,)
-        )
-        conn.commit()
-        affected = cursor.rowcount
-        cursor.close()
-        conn.close()
-        return affected
+        try:
+            cursor.execute("""
+                DELETE FROM reserva_habitaciones
+                WHERE reserva_id = %s AND habitacion_id = %s
+            """, (reserva_id, habitacion_id))
+            affected = cursor.rowcount
+
+            cursor.execute(
+                "UPDATE habitaciones SET estado = 'disponible' WHERE id = %s",
+                (habitacion_id,)
+            )
+            conn.commit()
+            return affected
+        except mysql.connector.Error:
+            conn.rollback()
+            raise
+        finally:
+            cursor.close()
+            conn.close()

@@ -1,6 +1,19 @@
 from flask import request, jsonify
 from Models.reserva_model import ReservaModel
 from utils.decorators import requiere_permiso
+## error reserva nueva prueba, se modifico get_all_reservas,get_reserva,get_reservas_activas,get_reservas_by_estado para serializar los objetos datetime y decimal a json, se agrego la funcion serializar para esto, se modifico el return de estas funciones para usar json.dumps con la funcion serializar, se agrego el import de json, datetime y decimal
+import json
+from datetime import timedelta, date
+from decimal import Decimal
+def serializar(obj):
+    if isinstance(obj, timedelta):
+        total = int(obj.total_seconds())
+        return f"{total//3600:02d}:{(total%3600)//60:02d}"
+    if isinstance(obj, (date)):
+        return obj.isoformat()
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError
 
 model = ReservaModel()
 
@@ -8,24 +21,26 @@ estados_validos = ['pendiente', 'confirmada', 'checkin', 'checkout', 'cancelada'
 
 @requiere_permiso('reservas.ver')
 def get_all_reservas():
-    return jsonify(model.get_all()), 200
+    reservas = model.get_all()
+    return json.dumps(reservas, default=serializar), 200, {'Content-Type': 'application/json'}
+
 
 @requiere_permiso('reservas.ver')
 def get_reserva(id):
     reserva = model.get_by_id(id)
     if not reserva:
         return jsonify({"error": "Reserva no encontrada"}), 404
-    return jsonify(reserva), 200
+    return json.dumps(reserva, default=serializar), 200, {'Content-Type': 'application/json'}
 
 @requiere_permiso('reservas.ver')
 def get_reservas_activas():
-    return jsonify(model.get_activas()), 200
+    return json.dumps(model.get_activas(), default=serializar), 200, {'Content-Type': 'application/json'}
 
 @requiere_permiso('reservas.ver')
 def get_reservas_by_estado(estado):
     if estado not in estados_validos:
         return jsonify({"error": f"Estado debe ser uno de: {estados_validos}"}), 400
-    return jsonify(model.get_by_estado(estado)), 200
+    return json.dumps(model.get_by_estado(estado), default=serializar), 200, {'Content-Type': 'application/json'}
 
 @requiere_permiso('reservas.crear')
 def create_reserva():

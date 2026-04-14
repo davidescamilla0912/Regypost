@@ -1,4 +1,5 @@
 from database import get_connection
+import mysql.connector
 
 class HabitacionModel:
 
@@ -110,14 +111,19 @@ class HabitacionModel:
     def update_estado(self, id, estado):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE habitaciones SET estado = %s WHERE id = %s", (estado, id)
-        )
-        conn.commit()
-        affected = cursor.rowcount
-        cursor.close()
-        conn.close()
-        return affected
+        try:
+            cursor.execute(
+                "UPDATE habitaciones SET estado = %s WHERE id = %s", (estado, id)
+            )
+            affected = cursor.rowcount
+            conn.commit()
+            return affected
+        except mysql.connector.Error:
+            conn.rollback()
+            raise
+        finally:
+            cursor.close()
+            conn.close()
 
     def delete(self, id):
         conn = get_connection()

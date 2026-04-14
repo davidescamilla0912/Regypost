@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from Config import JWT_SECRET_KEY
 
@@ -12,6 +13,7 @@ from Routes.inventario_routes import inventario_bp
 from Routes.gasto_parqueadero_caja_routes import gasto_parqueadero_caja_bp
 
 app = Flask(__name__)
+CORS(app)
 app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
 
 jwt = JWTManager(app)
