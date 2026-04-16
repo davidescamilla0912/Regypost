@@ -1,5 +1,6 @@
 from database import get_connection
 import mysql.connector
+from Models.consumo_model import ConsumoModel
 
 class ReservaModel:
 
@@ -182,6 +183,8 @@ class ReservaModel:
                 (id,)
             )
             habitaciones = [row[0] for row in cursor.fetchall()]
+
+            ConsumoModel().delete_by_reserva(id, cursor)
 
             cursor.execute("DELETE FROM reserva_habitaciones WHERE reserva_id = %s", (id,))
 

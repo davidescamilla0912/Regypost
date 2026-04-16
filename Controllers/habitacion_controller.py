@@ -3,6 +3,7 @@ from Models.habitacion_model import HabitacionModel
 from utils.decorators import requiere_permiso
 
 model = HabitacionModel()
+ESTADOS_VALIDOS_HABITACION = ['disponible', 'ocupada', 'mantenimiento', 'bloqueada']
 
 @requiere_permiso('habitaciones.ver')
 def get_all_habitaciones():
@@ -21,7 +22,7 @@ def get_habitaciones_disponibles():
 
 @requiere_permiso('habitaciones.ver')
 def get_habitaciones_by_estado(estado):
-    estados_validos = ['disponible', 'ocupada', 'mantenimiento', 'inactiva']
+    estados_validos = ESTADOS_VALIDOS_HABITACION
     if estado not in estados_validos:
         return jsonify({"error": f"Estado debe ser uno de: {estados_validos}"}), 400
     return jsonify(model.get_by_estado(estado)), 200
@@ -46,7 +47,7 @@ def update_habitacion(id):
 def update_estado_habitacion(id):
     data = request.json
     estado = data.get('estado')
-    estados_validos = ['disponible', 'ocupada', 'mantenimiento', 'inactiva']
+    estados_validos = ESTADOS_VALIDOS_HABITACION
     if estado not in estados_validos:
         return jsonify({"error": f"Estado debe ser uno de: {estados_validos}"}), 400
     affected = model.update_estado(id, estado)

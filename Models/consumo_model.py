@@ -113,12 +113,45 @@ class ConsumoModel:
     def delete(self, id):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM consumos WHERE id = %s", (id,))
-        conn.commit()
-        affected = cursor.rowcount
-        cursor.close()
-        conn.close()
-        return affected
+        try:
+            cursor.execute("DELETE FROM consumos WHERE id = %s", (id,))
+            affected = cursor.rowcount
+            conn.commit()
+            return affected
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            cursor.close()
+            conn.close()
+
+    def delete_by_reserva(self, reserva_id, cursor=None):
+        owns_connection = cursor is None
+        if owns_connection:
+            conn = get_connection()
+            cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                DELETE c
+                FROM consumos c
+                JOIN reserva_habitaciones rh ON c.reserva_habitacion_id = rh.id
+                WHERE rh.reserva_id = %s
+                """,
+                (reserva_id,)
+            )
+            affected = cursor.rowcount
+            if owns_connection:
+                conn.commit()
+            return affected
+        except Exception:
+            if owns_connection:
+                conn.rollback()
+            raise
+        finally:
+            if owns_connection:
+                cursor.close()
+                conn.close()
 
     def get_tipos_consumo(self):
         conn = get_connection()
