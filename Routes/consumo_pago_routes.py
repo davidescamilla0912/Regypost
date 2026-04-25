@@ -5,7 +5,7 @@ from Controllers.consumo_controller import (
 )
 from Controllers.pago_controller import (
     get_pagos, get_pagos_reserva, get_pago, get_pagos_fecha,
-    get_total_pagado, create_pago, delete_pago
+    get_total_pagado, create_pago, update_pago, delete_pago
 )
 
 consumo_pago_bp = Blueprint('consumos_pagos', __name__)
@@ -27,6 +27,7 @@ consumo_pago_bp.route('/pagos/',                      methods=['GET']   )(get_pa
 consumo_pago_bp.route('/pagos/<int:id>',               methods=['GET']   )(get_pago)
 consumo_pago_bp.route('/pagos/fecha/<fecha>',          methods=['GET']   )(get_pagos_fecha)
 consumo_pago_bp.route('/pagos',                        methods=['POST']  )(create_pago)
+consumo_pago_bp.route('/pagos/<int:id>',               methods=['PUT']   )(update_pago)
 consumo_pago_bp.route('/pagos/<int:id>',               methods=['DELETE'])(delete_pago)
 consumo_pago_bp.route('/reservas/<int:reserva_id>/pagos',        methods=['GET'])(get_pagos_reserva)
 consumo_pago_bp.route('/reservas/<int:reserva_id>/pagos/total',  methods=['GET'])(get_total_pagado)

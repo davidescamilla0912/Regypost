@@ -108,3 +108,32 @@ class PagoModel:
         cursor.close()
         conn.close()
         return result
+
+    def update(self, id, data):
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE pagos
+            SET reserva_id = %s,
+                empleado_id = %s,
+                monto = %s,
+                metodo = %s,
+                referencia = %s,
+                fecha_pago = %s,
+                notas = %s
+            WHERE id = %s
+        """, (
+            data['reserva_id'],
+            data.get('empleado_id'),
+            data['monto'],
+            data.get('metodo', 'efectivo'),
+            data.get('referencia'),
+            data.get('fecha_pago'),
+            data.get('notas'),
+            id
+        ))
+        conn.commit()
+        affected = cursor.rowcount
+        cursor.close()
+        conn.close()
+        return affected

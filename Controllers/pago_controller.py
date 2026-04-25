@@ -42,6 +42,18 @@ def create_pago():
 
 
 @requiere_permiso('pagos.registrar')
+def update_pago(id):
+    data = request.json
+    if not data or not data.get('reserva_id') or not data.get('monto'):
+        return jsonify({"error": "reserva_id y monto son requeridos"}), 400
+
+    affected = model.update(id, data)
+    if not affected:
+        return jsonify({"error": "Pago no encontrado"}), 404
+    return jsonify({"mensaje": "Pago actualizado"}), 200
+
+
+@requiere_permiso('pagos.registrar')
 def delete_pago(id):
     affected = model.delete(id)
     if not affected:
