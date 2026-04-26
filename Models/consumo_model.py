@@ -161,3 +161,41 @@ class ConsumoModel:
         cursor.close()
         conn.close()
         return result
+
+    def create_daño(self, data):
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Buscar el id del tipo_consumo 'Daño' dinámicamente
+        cursor.execute("SELECT id FROM tipos_consumo WHERE nombre = 'Daño' AND activo = 1")
+        tipo = cursor.fetchone()
+        if not tipo:
+            cursor.close()
+            conn.close()
+            raise ValueError("Tipo de consumo 'Daño' no está configurado en la BD")
+
+        tipo_consumo_id = tipo[0]
+        total = data.get('precio_unitario', 0)  # cantidad siempre 1 para daños
+
+        cursor.execute("""
+            INSERT INTO consumos (
+                reserva_habitacion_id, tipo_consumo_id, descripcion,
+                cantidad, precio_unitario, total, fecha, empleado_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            data['reserva_habitacion_id'],
+            tipo_consumo_id,
+            data.get('descripcion'),  # descripción del daño es importante
+            1,                        # siempre 1 unidad por daño
+            data.get('precio_unitario', 0),
+            total,
+            data['fecha'],
+            data.get('empleado_id')
+        ))
+        conn.commit()
+        new_id = cursor.lastrowid
+        cursor.close()
+        conn.close()
+        return new_id
+
+   

@@ -33,6 +33,35 @@ def create_consumo():
     return jsonify({"mensaje": "Consumo registrado", "id": new_id}), 201
 
 @requiere_permiso('consumos.registrar')
+def create_daño():
+    data = request.json
+
+    # Validaciones específicas para daños
+    if not data:
+        return jsonify({"error": "No se recibieron datos"}), 400
+
+    errores = []
+    if not data.get('reserva_habitacion_id'):
+        errores.append("reserva_habitacion_id es requerido")
+    if not data.get('descripcion') or not data['descripcion'].strip():
+        errores.append("descripcion es requerida (detalla el daño)")
+    if not data.get('precio_unitario') or data['precio_unitario'] <= 0:
+        errores.append("precio_unitario debe ser mayor a 0")
+    if not data.get('fecha'):
+        errores.append("fecha es requerida")
+    if not data.get('empleado_id'):
+        errores.append("empleado_id es requerido")
+
+    if errores:
+        return jsonify({"error": "Datos inválidos", "detalles": errores}), 400
+
+    try:
+        new_id = model.create_daño(data)
+        return jsonify({"mensaje": "Daño registrado correctamente", "id": new_id}), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 500
+
+@requiere_permiso('consumos.registrar')
 def update_consumo(id):
     data = request.json
     affected = model.update(id, data)

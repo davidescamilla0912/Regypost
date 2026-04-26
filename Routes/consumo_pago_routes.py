@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify
 from Controllers.consumo_controller import (
     get_consumos_reserva, get_consumo, get_consumos_fecha,
-    get_tipos_consumo, create_consumo, update_consumo, delete_consumo
+    get_tipos_consumo, create_consumo, update_consumo, delete_consumo,
+    create_daño
 )
 from Controllers.pago_controller import (
     get_pagos, get_pagos_reserva, get_pago, get_pagos_fecha,
@@ -17,6 +18,7 @@ consumo_pago_bp.route('/tipos-consumo',               methods=['GET'])(get_tipos
 consumo_pago_bp.route('/consumos/<int:id>',            methods=['GET']   )(get_consumo)
 consumo_pago_bp.route('/consumos/fecha/<fecha>',       methods=['GET']   )(get_consumos_fecha)
 consumo_pago_bp.route('/consumos',                     methods=['POST']  )(create_consumo)
+consumo_pago_bp.route('/consumos/daños',               methods=['POST']  )(create_daño)
 consumo_pago_bp.route('/consumos/<int:id>',            methods=['PUT']   )(update_consumo)
 consumo_pago_bp.route('/consumos/<int:id>',            methods=['DELETE'])(delete_consumo)
 consumo_pago_bp.route('/reservas/<int:reserva_id>/consumos', methods=['GET'])(get_consumos_reserva)
