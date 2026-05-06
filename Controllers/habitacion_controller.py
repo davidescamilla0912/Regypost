@@ -3,7 +3,7 @@ from Models.habitacion_model import HabitacionModel
 from utils.decorators import requiere_permiso
 
 model = HabitacionModel()
-ESTADOS_VALIDOS_HABITACION = ['disponible', 'ocupada', 'mantenimiento', 'bloqueada']
+ESTADOS_VALIDOS_HABITACION = ['disponible', 'reservada', 'ocupada', 'mantenimiento', 'bloqueada']
 
 @requiere_permiso('habitaciones.ver')
 def get_all_habitaciones():

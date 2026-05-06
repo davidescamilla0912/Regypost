@@ -69,6 +69,38 @@ def update_estado_reserva(id):
         return jsonify({"error": "Reserva no encontrada"}), 404
     return jsonify({"mensaje": f"Estado actualizado a {estado}"}), 200
 
+@requiere_permiso('reservas.editar')
+def confirmar_reserva(id):
+    data = request.json or {}
+    anticipo = data.get('anticipo')
+
+    if anticipo is None:
+        return jsonify({"error": "anticipo es requerido"}), 400
+
+    try:
+        anticipo = Decimal(str(anticipo))
+    except Exception:
+        return jsonify({"error": "anticipo debe ser un número válido"}), 400
+
+    if anticipo < 0:
+        return jsonify({"error": "anticipo debe ser mayor o igual a 0"}), 400
+
+    reserva_actual = model.get_by_id(id)
+    if not reserva_actual:
+        return jsonify({"error": "Reserva no encontrada"}), 404
+
+    total = reserva_actual.get('total') or Decimal('0')
+    if anticipo > total:
+        return jsonify({"error": "anticipo no puede ser mayor que el total de la reserva"}), 400
+
+    reserva, status = model.confirmar_reserva(id, anticipo)
+    if status == "not_found":
+        return jsonify({"error": "Reserva no encontrada"}), 404
+    if status == "invalid_state":
+        return jsonify({"error": "Solo se puede confirmar una reserva en estado pendiente"}), 400
+
+    return json.dumps(reserva, default=serializar), 200, {'Content-Type': 'application/json'}
+
 @requiere_permiso('reservas.cancelar')
 def delete_reserva(id):
     affected = model.delete(id)
@@ -93,3 +125,9 @@ def agregar_habitacion_reserva(reserva_id):
 def quitar_habitacion_reserva(reserva_id, habitacion_id):
     model.quitar_habitacion(reserva_id, habitacion_id)
     return jsonify({"mensaje": "Habitación removida de la reserva"}), 200
+
+@requiere_permiso('reservas.ver')
+def get_reservas_futuras_habitacion(habitacion_id):
+    """Verifica si una habitación tiene reservas futuras."""
+    tiene = model.tiene_reservas_futuras(habitacion_id)
+    return jsonify({"tiene_reservas_futuras": tiene}), 200
