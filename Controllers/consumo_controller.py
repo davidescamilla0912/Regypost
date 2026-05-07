@@ -29,6 +29,11 @@ def create_consumo():
     data = request.json
     if not data or not data.get('reserva_habitacion_id') or not data.get('tipo_consumo_id') or not data.get('fecha'):
         return jsonify({"error": "reserva_habitacion_id, tipo_consumo_id y fecha son requeridos"}), 400
+    
+    estados_validos = {'pendiente', 'cancelado'}
+    if data.get('estado') not in estados_validos:
+        data['estado'] = 'pendiente'
+        
     new_id = model.create(data)
     return jsonify({"mensaje": "Consumo registrado", "id": new_id}), 201
 

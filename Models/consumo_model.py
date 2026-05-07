@@ -60,20 +60,21 @@ class ConsumoModel:
         cursor = conn.cursor()
         total = data.get('cantidad', 1) * data.get('precio_unitario', 0)
         cursor.execute("""
-            INSERT INTO consumos (
-                reserva_habitacion_id, tipo_consumo_id, descripcion,
-                cantidad, precio_unitario, total, fecha, empleado_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            data['reserva_habitacion_id'],
-            data['tipo_consumo_id'],
-            data.get('descripcion'),
-            data.get('cantidad', 1),
-            data.get('precio_unitario', 0),
-            total,
-            data['fecha'],
-            data.get('empleado_id')
-        ))
+        INSERT INTO consumos (
+            reserva_habitacion_id, tipo_consumo_id, descripcion,
+            cantidad, precio_unitario, total, fecha, empleado_id, estado
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (
+        data['reserva_habitacion_id'],
+        data['tipo_consumo_id'],
+        data.get('descripcion'),
+        data.get('cantidad', 1),
+        data.get('precio_unitario', 0),
+        total,
+        data['fecha'],
+        data.get('empleado_id'),
+        data.get('estado', 'pendiente')   # ← nuevo
+    ))
         conn.commit()
         new_id = cursor.lastrowid
         cursor.close()
