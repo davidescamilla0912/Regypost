@@ -131,3 +131,97 @@ def get_reservas_futuras_habitacion(habitacion_id):
     """Verifica si una habitación tiene reservas futuras."""
     tiene = model.tiene_reservas_futuras(habitacion_id)
     return jsonify({"tiene_reservas_futuras": tiene}), 200
+
+@requiere_permiso('reservas.editar')
+def extender_reserva(id):
+    data = request.json or {}
+    dias_extra = data.get('dias_extra')
+
+    if not dias_extra or not isinstance(dias_extra, int) or dias_extra <= 0:
+        return jsonify({"error": "dias_extra debe ser un número entero mayor a 0"}), 400
+
+    resultado, status = model.extender_dias(id, dias_extra)
+
+    if status == "not_found":
+        return jsonify({"error": "Reserva no encontrada"}), 404
+    if status == "invalid_state":
+        return jsonify({"error": "Solo se pueden extender reservas en estado check-in"}), 400
+
+    return jsonify(resultado), 200
+
+@requiere_permiso('reservas.editar')
+def cambiar_habitacion(id):
+    """
+    POST /reservas/<id>/cambiar-habitacion
+    Body: { "nueva_habitacion_id": int, "motivo": str }
+    """
+    data = request.json or {}
+ 
+    nueva_habitacion_id = data.get('nueva_habitacion_id')
+    motivo              = (data.get('motivo') or '').strip()
+ 
+    if not nueva_habitacion_id or not isinstance(nueva_habitacion_id, int):
+        return jsonify({"error": "nueva_habitacion_id (int) es requerido"}), 400
+ 
+    if not motivo:
+        return jsonify({"error": "motivo es requerido"}), 400
+ 
+    if len(motivo) > 500:
+        return jsonify({"error": "motivo no puede superar 500 caracteres"}), 400
+ 
+    # Obtener empleado de la sesión (si tu sistema lo expone en el token/JWT)
+    empleado_id = None
+    try:
+        from flask import g
+        empleado_id = getattr(g, 'empleado_id', None)
+    except Exception:
+        pass
+ 
+    resultado, status = model.cambiar_habitacion(
+        reserva_id          = id,
+        nueva_habitacion_id = nueva_habitacion_id,
+        motivo              = motivo,
+        empleado_id         = empleado_id
+    )
+ 
+    errores = {
+        "not_found":        ("Reserva no encontrada", 404),
+        "invalid_state":    ("Solo se puede cambiar una reserva en estado checkin", 400),
+        "no_room_linked":   ("La reserva no tiene habitación asignada", 400),
+        "same_room":        ("La habitación destino es la misma que la actual", 400),
+        "dest_not_found":   ("Habitación destino no encontrada", 404),
+        "dest_not_available": ("La habitación destino no está disponible (ocupada/mantenimiento/bloqueada)", 409),
+        "dest_occupied":    ("La habitación destino tiene un checkin activo en este momento", 409),
+        "date_conflict":    ("La habitación destino tiene una reserva futura que choca con el checkout actual", 409),
+    }
+ 
+    if status in errores:
+        msg, code = errores[status]
+        return jsonify({"error": msg}), code
+ 
+    return json.dumps(resultado, default=serializar), 200, {'Content-Type': 'application/json'}
+ 
+ 
+@requiere_permiso('reservas.ver')
+def get_habitaciones_para_cambio(id):
+    """
+    GET /reservas/<reserva_id>/habitaciones-para-cambio
+    Retorna habitaciones disponibles y reservadas-sin-conflicto para el cambio.
+    """
+    from datetime import date, timedelta
+    from decimal import Decimal
+ 
+    habitaciones = model.get_habitaciones_para_cambio(id)
+ 
+    # serializar Decimal/date que puedan venir del model
+    def _serial(obj):
+        if isinstance(obj, (date,)):
+            return obj.isoformat()
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if isinstance(obj, timedelta):
+            return str(obj)
+        raise TypeError
+ 
+    return json.dumps(habitaciones, default=_serial), 200, {'Content-Type': 'application/json'}
+ 
