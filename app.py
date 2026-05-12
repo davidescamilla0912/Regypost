@@ -18,6 +18,10 @@ app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
 
 jwt = JWTManager(app)
 
+@app.route("/")
+def home():
+    return "API funcionando correctamente"
+
 app.register_blueprint(auth_bp)
 app.register_blueprint(cliente_bp)
 app.register_blueprint(habitacion_bp)
