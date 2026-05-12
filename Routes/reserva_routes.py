@@ -5,7 +5,7 @@ from Controllers.reserva_controller import (
     update_estado_reserva, confirmar_reserva, delete_reserva,
     get_habitaciones_reserva, agregar_habitacion_reserva,
     quitar_habitacion_reserva, get_reservas_futuras_habitacion,extender_reserva,
-    cambiar_habitacion,get_habitaciones_para_cambio
+    cambiar_habitacion,get_habitaciones_para_cambio,update_personas_reserva
 )
 
 reserva_bp = Blueprint('reservas', __name__)
@@ -26,3 +26,4 @@ reserva_bp.route('/reservas/habitacion/<int:habitacion_id>/futuras', methods=['G
 reserva_bp.route('/reservas/<int:id>/extender', methods=['PATCH'])(extender_reserva)
 reserva_bp.route('/reservas/<int:id>/cambiar-habitacion', methods=['POST'])(cambiar_habitacion)
 reserva_bp.route('/reservas/<int:id>/habitaciones-para-cambio', methods=['GET'])(get_habitaciones_para_cambio)
+reserva_bp.route('/reservas/<int:id>/personas', methods=['PATCH'])(update_personas_reserva)

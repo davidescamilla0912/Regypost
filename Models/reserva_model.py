@@ -162,6 +162,26 @@ class ReservaModel:
         conn.close()
         return affected
 
+    def update_personas(self, id, num_adultos, num_ninos):
+        conn = get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                UPDATE reservas
+                SET num_adultos = %s,
+                    num_ninos   = %s
+                WHERE id = %s
+            """, (num_adultos, num_ninos, id))
+            conn.commit()
+            affected = cursor.rowcount
+            return affected
+        except mysql.connector.Error:
+            conn.rollback()
+            raise
+        finally:
+            cursor.close()
+            conn.close()
+
     def update_estado(self, id, estado):
         conn = get_connection()
         cursor = conn.cursor()

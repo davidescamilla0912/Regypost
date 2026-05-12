@@ -224,4 +224,21 @@ def get_habitaciones_para_cambio(id):
         raise TypeError
  
     return json.dumps(habitaciones, default=_serial), 200, {'Content-Type': 'application/json'}
+
+@requiere_permiso('reservas.editar')
+def update_personas_reserva(id):
+    data = request.get_json()
+    num_adultos = data.get('num_adultos')
+    num_ninos   = data.get('num_ninos')
+
+    if num_adultos is None or num_ninos is None:
+        return jsonify({'error': 'num_adultos y num_ninos son requeridos'}), 400
+    if int(num_adultos) < 1:
+        return jsonify({'error': 'Debe haber al menos 1 adulto'}), 400
+
+    affected = model.update_personas(id, int(num_adultos), int(num_ninos))
+    if not affected:
+        return jsonify({'error': 'Reserva no encontrada'}), 404
+
+    return jsonify({'ok': True, 'num_adultos': int(num_adultos), 'num_ninos': int(num_ninos)})
  
