@@ -9,4 +9,4 @@ DB_CONFIG = {
 }
 
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "hotel_bq84_secret_key_2026")
-JWT_ACCESS_TOKEN_EXPIRES = 28800
+JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 28800))
