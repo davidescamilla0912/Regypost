@@ -22,14 +22,14 @@ jwt = JWTManager(app)
 def home():
     return "API funcionando correctamente"
 
-#app.register_blueprint(auth_bp)
-#app.register_blueprint(cliente_bp)
-#app.register_blueprint(habitacion_bp)
-#app.register_blueprint(empleado_bp)
-#app.register_blueprint(reserva_bp)
-#app.register_blueprint(consumo_pago_bp)
-#app.register_blueprint(inventario_bp)
-#app.register_blueprint(gasto_parqueadero_caja_bp)
+app.register_blueprint(auth_bp)
+app.register_blueprint(cliente_bp)
+app.register_blueprint(habitacion_bp)
+app.register_blueprint(empleado_bp)
+app.register_blueprint(reserva_bp)
+app.register_blueprint(consumo_pago_bp)
+app.register_blueprint(inventario_bp)
+app.register_blueprint(gasto_parqueadero_caja_bp)
 
 if __name__ == '__main__':
     app.run(debug=True)
