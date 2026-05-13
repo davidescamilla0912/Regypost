@@ -13,7 +13,7 @@ from Routes.inventario_routes import inventario_bp
 from Routes.gasto_parqueadero_caja_routes import gasto_parqueadero_caja_bp
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://regypost-frontend.vercel.app/"])
 app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
 
 jwt = JWTManager(app)
