@@ -1,10 +1,11 @@
 from flask import Blueprint
 from Controllers.auth_controller import login
-from app import limiter
+from extensions import limiter
 
 auth_bp = Blueprint('auth', __name__)
 
-auth_bp.route('/auth/login', methods=['POST'])(login)
 @limiter.limit("5 per minute")
 def login_route():
     return login()
+
+auth_bp.route('/auth/login', methods=['POST'])(login_route)
