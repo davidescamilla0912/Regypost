@@ -15,7 +15,10 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
-CORS(app, origins=["https://regypost-frontend.vercel.app"])
+CORS(app, origins=[
+    "https://regypost-frontend.vercel.app",
+    "http://localhost:3000"
+])
 app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
 
 jwt = JWTManager(app)
