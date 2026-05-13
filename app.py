@@ -17,12 +17,16 @@ app = Flask(__name__)
 CORS(app, origins=[
     "https://regypost-frontend.vercel.app",
     "http://localhost:3000"
-])
+], supports_credentials=True)
+
 app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
 
 jwt = JWTManager(app)
 limiter.init_app(app)
 
+@limiter.request_filter
+def exempt_options():
+    return request.method == "OPTIONS"
 
 @app.route("/")
 def home():
