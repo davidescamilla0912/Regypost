@@ -136,16 +136,22 @@ def get_reservas_futuras_habitacion(habitacion_id):
 def extender_reserva(id):
     data = request.json or {}
     dias_extra = data.get('dias_extra')
+    precio_noche = data.get('precio_noche')
 
     if not dias_extra or not isinstance(dias_extra, int) or dias_extra <= 0:
         return jsonify({"error": "dias_extra debe ser un número entero mayor a 0"}), 400
 
-    resultado, status = model.extender_dias(id, dias_extra)
+    if precio_noche is not None and (not isinstance(precio_noche, (int, float)) or precio_noche <= 0):
+        return jsonify({"error": "precio_noche debe ser un número mayor a 0"}), 400
+
+    resultado, status = model.extender_dias(id, dias_extra, precio_noche)
 
     if status == "not_found":
         return jsonify({"error": "Reserva no encontrada"}), 404
     if status == "invalid_state":
         return jsonify({"error": "Solo se pueden extender reservas en estado check-in"}), 400
+    if status == "missing_price":
+        return jsonify({"error": "precio_noche es requerido cuando la reserva no tiene precio registrado"}), 400
 
     return jsonify(resultado), 200
 

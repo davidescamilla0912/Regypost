@@ -460,7 +460,7 @@ class ReservaModel:
         conn.close()
         return count > 0
     
-    def extender_dias(self, id, dias_extra):
+    def extender_dias(self, id, dias_extra, precio_noche_override=None):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         try:
@@ -485,13 +485,15 @@ class ReservaModel:
 
             nueva_fecha_salida = fecha_salida_actual + timedelta(days=int(dias_extra))
 
-            precio_noche = float(reserva.get('precio_noche_total') or 0)
+            precio_noche = float(precio_noche_override) if precio_noche_override is not None else float(reserva.get('precio_noche_total') or 0)
+            if precio_noche <= 0:
+                return None, "missing_price"
+
             total_actual = float(reserva.get('total') or 0)
-            anticipo = float(reserva.get('anticipo') or 0)
 
             costo_dias_extra = precio_noche * int(dias_extra)
             nuevo_total = total_actual + costo_dias_extra
-            nuevo_saldo = max(nuevo_total - anticipo, 0)
+            nuevo_saldo = float(reserva.get('saldo_pendiente') or 0) + costo_dias_extra
 
             cursor.execute("""
                 UPDATE reservas SET
@@ -505,8 +507,6 @@ class ReservaModel:
 
             return {
                 "nueva_fecha_salida": getattr(nueva_fecha_salida, 'isoformat', lambda: str(nueva_fecha_salida))(),
-                "dias_extra": int(dias_extra),
-                "costo_dias_extra": costo_dias_extra,
                 "nuevo_total": nuevo_total,
                 "nuevo_saldo": nuevo_saldo
             }, "ok"
