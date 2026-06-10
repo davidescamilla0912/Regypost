@@ -5,7 +5,8 @@ DB_CONFIG = {
     "user": os.environ.get("MYSQLUSER"),
     "password": os.environ.get("MYSQLPASSWORD"),
     "database": os.environ.get("MYSQLDATABASE"),
-    "port": int(os.environ.get("MYSQLPORT", 3306))
+    "port": int(os.environ.get("MYSQLPORT", 3306)),
+
 }
 
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "hotel_bq84_secret_key_2026")
