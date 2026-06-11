@@ -15,7 +15,6 @@ from Routes.gasto_parqueadero_caja_routes import gasto_parqueadero_caja_bp
 
 app = Flask(__name__)
 CORS(app, origins=[
-    "https://regypost-frontend.vercel.app",
     "http://localhost:3000"
 ], supports_credentials=True)
 
