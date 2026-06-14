@@ -7,6 +7,13 @@ from Controllers.reserva_controller import (
     quitar_habitacion_reserva, get_reservas_futuras_habitacion,extender_reserva,
     cambiar_habitacion,get_habitaciones_para_cambio,update_personas_reserva
 )
+from Controllers.acompanante_controller import (
+    get_acompanantes_reserva,
+    create_acompanante,
+    create_acompanantes_bulk,
+    update_acompanante,
+    delete_acompanante
+)
 
 reserva_bp = Blueprint('reservas', __name__)
 
@@ -27,3 +34,10 @@ reserva_bp.route('/reservas/<int:id>/extender', methods=['PATCH'])(extender_rese
 reserva_bp.route('/reservas/<int:id>/cambiar-habitacion', methods=['POST'])(cambiar_habitacion)
 reserva_bp.route('/reservas/<int:id>/habitaciones-para-cambio', methods=['GET'])(get_habitaciones_para_cambio)
 reserva_bp.route('/reservas/<int:id>/personas', methods=['PATCH'])(update_personas_reserva)
+# ── Acompañantes ──────────────────────────────────────────────────────────────
+
+reserva_bp.route('/reservas/<int:reserva_id>/acompanantes',                              methods=['GET'])(get_acompanantes_reserva)
+reserva_bp.route('/reservas/<int:reserva_id>/acompanantes',                              methods=['POST'])(create_acompanante)
+reserva_bp.route('/reservas/<int:reserva_id>/acompanantes/bulk',                         methods=['POST'])(create_acompanantes_bulk)
+reserva_bp.route('/acompanantes/<int:id>',                                               methods=['PUT'])(update_acompanante)
+reserva_bp.route('/acompanantes/<int:id>',                                               methods=['DELETE'])(delete_acompanante)
