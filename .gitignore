@@ -1,4 +1,32 @@
+# Python environments
 venv/
+.venv/
+env/
+ENV/
+
+# Python cache and test artifacts
 __pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Local configuration and secrets
 .env
-*.pyc
+.env.*
+!.env.example
+
+# IDE and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs and local runtime files
+*.log
+instance/
