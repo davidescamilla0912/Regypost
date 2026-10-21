@@ -30,3 +30,6 @@ Desktop.ini
 # Logs and local runtime files
 *.log
 instance/
+
+# Internal documentation not intended for the public repository
+/ECOSISTEMA_BACKEND.md
