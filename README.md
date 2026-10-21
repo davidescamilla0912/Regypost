@@ -1,2 +1,0 @@
-# Regypost
-Hotel software

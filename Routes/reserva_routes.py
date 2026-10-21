@@ -5,7 +5,8 @@ from Controllers.reserva_controller import (
     update_estado_reserva, confirmar_reserva, delete_reserva,
     get_habitaciones_reserva, agregar_habitacion_reserva,
     quitar_habitacion_reserva, get_reservas_futuras_habitacion,extender_reserva,
-    cambiar_habitacion,get_habitaciones_para_cambio,update_personas_reserva
+    cambiar_habitacion, get_habitaciones_para_cambio, update_personas_reserva,
+    checkin_reserva, checkout_reserva, cancelar_reserva
 )
 from Controllers.acompanante_controller import (
     get_acompanantes_reserva,
@@ -34,6 +35,11 @@ reserva_bp.route('/reservas/<int:id>/extender', methods=['PATCH'])(extender_rese
 reserva_bp.route('/reservas/<int:id>/cambiar-habitacion', methods=['POST'])(cambiar_habitacion)
 reserva_bp.route('/reservas/<int:id>/habitaciones-para-cambio', methods=['GET'])(get_habitaciones_para_cambio)
 reserva_bp.route('/reservas/<int:id>/personas', methods=['PATCH'])(update_personas_reserva)
+
+# ── §6.4 Check-in / check-out / cancelación atómicos ─────────────────────────
+reserva_bp.route('/reservas/<int:id>/checkin',  methods=['POST'])(checkin_reserva)
+reserva_bp.route('/reservas/<int:id>/checkout', methods=['POST'])(checkout_reserva)
+reserva_bp.route('/reservas/<int:id>/cancelar', methods=['POST'])(cancelar_reserva)
 # ── Acompañantes ──────────────────────────────────────────────────────────────
 
 reserva_bp.route('/reservas/<int:reserva_id>/acompanantes',                              methods=['GET'])(get_acompanantes_reserva)

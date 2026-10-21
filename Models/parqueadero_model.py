@@ -1,4 +1,5 @@
 from database import get_connection
+from utils.fechas import a_datetime_local
 
 class ParqueaderoModel:
 
@@ -71,7 +72,7 @@ class ParqueaderoModel:
             data.get('reserva_id'),
             data.get('habitacion_id'),
             data['placa'],
-            data['hora_entrada'],
+            a_datetime_local(data['hora_entrada']),
             data.get('valor', 0),
             data.get('notas')
         ))
@@ -91,7 +92,7 @@ class ParqueaderoModel:
                 notas       = %s
             WHERE id = %s
         """, (
-            data['hora_salida'],
+            a_datetime_local(data['hora_salida']),
             data.get('valor', 0),
             data.get('notas'),
             id

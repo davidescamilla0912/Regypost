@@ -1,125 +1,134 @@
-from flask import request, jsonify
+"""
+Acompañantes de una reserva.
+
+Nota importante para el frontend: la tabla `acompanantes_reserva` **no existía
+en la base de datos**, así que todos estos endpoints respondían 500. La crea
+`migrations/001_backend_spec.sql`.
+
+§6.6 — Cada alta o baja de acompañante recalcula `num_adultos` / `num_ninos`
+de la reserva en el servidor, así que el frontend ya no tiene que hacer el
+`PATCH /reservas/:id/personas` con los números que él mismo derivaba.
+"""
+from flask import request
+
 from Models.acompanante_model import AcompananteModel
+from Models.reserva_model import ReservaModel
+from utils import respuestas
 from utils.decorators import requiere_permiso
+from utils.validacion import filtrar, fusionar
 
 model = AcompananteModel()
+reserva_model = ReservaModel()
 
-# ─── Campos requeridos para crear / actualizar ────────────────────────────────
-CAMPOS_REQUERIDOS = ('numero_documento', 'nombre', 'apellido')
+CAMPOS = ('tipo_documento', 'numero_documento', 'nombre', 'apellido',
+          'telefono', 'es_menor')
 
-TIPOS_DOC_VALIDOS = ('CC', 'CE', 'Pasaporte', 'NIT', 'Otro')
+OBLIGATORIOS = ('numero_documento', 'nombre', 'apellido')
+
+TIPOS_DOC_VALIDOS = ('CC', 'CE', 'Pasaporte', 'NIT', 'TI', 'RC', 'Otro')
 
 
-def _validar_payload(data):
-    """
-    Valida que el payload tenga los campos mínimos.
-    Retorna un mensaje de error o None si todo está bien.
-    """
-    if not data:
-        return 'Se requiere un cuerpo JSON'
-
-    for campo in CAMPOS_REQUERIDOS:
-        if not data.get(campo) or not str(data[campo]).strip():
-            return f'{campo} es requerido'
-
+def _validar(data):
+    """Devuelve un mensaje de error, o None si el payload está bien."""
     tipo_doc = data.get('tipo_documento', 'CC')
     if tipo_doc not in TIPOS_DOC_VALIDOS:
         return f'tipo_documento debe ser uno de: {list(TIPOS_DOC_VALIDOS)}'
-
     return None
 
 
-# ─── GET /reservas/<reserva_id>/acompanantes ─────────────────────────────────
 @requiere_permiso('reservas.ver')
 def get_acompanantes_reserva(reserva_id):
-    """Lista todos los acompañantes de una reserva."""
-    acompanantes = model.get_by_reserva(reserva_id)
-    return jsonify(acompanantes), 200
+    return respuestas.lista(model.get_by_reserva(reserva_id))
 
 
-# ─── POST /reservas/<reserva_id>/acompanantes ────────────────────────────────
 @requiere_permiso('reservas.editar')
 def create_acompanante(reserva_id):
-    """Agrega UN acompañante a una reserva existente."""
-    data = request.json
-    error = _validar_payload(data)
+    data, faltantes = filtrar(request.json, CAMPOS, obligatorios=OBLIGATORIOS)
+    if faltantes:
+        return respuestas.error(
+            f"Faltan campos requeridos: {', '.join(faltantes)}", 400,
+            codigo='CAMPOS_REQUERIDOS', campos=faltantes)
+
+    error = _validar(data)
     if error:
-        return jsonify({'error': error}), 400
+        return respuestas.error(error, 400, codigo='VALIDACION')
 
     try:
-        new_id = model.create(reserva_id, data)
-        acomp = model.get_by_id(new_id)
-        return jsonify({
-            'mensaje': 'Acompañante registrado correctamente',
-            'acompanante': acomp
-        }), 201
-    except Exception as e:
-        # El UNIQUE KEY (reserva_id, numero_documento) puede disparar este error
-        msg = str(e)
-        if 'Duplicate entry' in msg or '1062' in msg:
-            return jsonify({
-                'error': 'Este documento ya está registrado como acompañante en esta reserva'
-            }), 409
-        return jsonify({'error': 'Error interno al registrar el acompañante'}), 500
+        nuevo_id = model.create(reserva_id, data)
+    except Exception as exc:
+        if 'Duplicate entry' in str(exc) or '1062' in str(exc):
+            return respuestas.error(
+                'Este documento ya está registrado como acompañante en esta reserva',
+                409, codigo='ACOMPANANTE_DUPLICADO')
+        raise
+
+    personas = reserva_model.sincronizar_personas(reserva_id)
+    return respuestas.creado(model.get_by_id(nuevo_id),
+                             mensaje='Acompañante registrado', **personas)
 
 
-# ─── POST /reservas/<reserva_id>/acompanantes/bulk ───────────────────────────
 @requiere_permiso('reservas.editar')
 def create_acompanantes_bulk(reserva_id):
-    """
-    Agrega VARIOS acompañantes de una sola vez.
-    Body esperado: [ { tipo_documento, numero_documento, nombre, apellido, telefono }, ... ]
-    """
-    data = request.json
-    if not isinstance(data, list):
-        return jsonify({'error': 'Se esperaba una lista de acompañantes'}), 400
+    lista = request.json
+    if not isinstance(lista, list):
+        return respuestas.error('Se esperaba una lista de acompañantes', 400,
+                                codigo='VALIDACION')
+    if not lista:
+        return respuestas.lista([], insertados=0)
 
-    if len(data) == 0:
-        return jsonify({'mensaje': 'No se enviaron acompañantes', 'insertados': 0}), 200
-
-    # Validar cada elemento
-    for i, item in enumerate(data):
-        error = _validar_payload(item)
+    limpios = []
+    for i, item in enumerate(lista):
+        data, faltantes = filtrar(item, CAMPOS, obligatorios=OBLIGATORIOS)
+        if faltantes:
+            return respuestas.error(
+                f"Acompañante #{i + 1}: faltan {', '.join(faltantes)}", 400,
+                codigo='CAMPOS_REQUERIDOS')
+        error = _validar(data)
         if error:
-            return jsonify({'error': f'Acompañante #{i + 1}: {error}'}), 400
+            return respuestas.error(f'Acompañante #{i + 1}: {error}', 400,
+                                    codigo='VALIDACION')
+        limpios.append(data)
 
-    try:
-        insertados = model.create_bulk(reserva_id, data)
-        acompanantes = model.get_by_reserva(reserva_id)
-        return jsonify({
-            'mensaje': f'{insertados} acompañante(s) registrado(s)',
-            'insertados': insertados,
-            'acompanantes': acompanantes
-        }), 201
-    except Exception as e:
-        return jsonify({'error': 'Error interno al registrar los acompañantes'}), 500
+    insertados = model.create_bulk(reserva_id, limpios)
+    personas = reserva_model.sincronizar_personas(reserva_id)
+
+    return respuestas.lista(model.get_by_reserva(reserva_id),
+                            insertados=insertados,
+                            mensaje=f'{insertados} acompañante(s) registrado(s)',
+                            **personas)
 
 
-# ─── PUT /acompanantes/<id> ───────────────────────────────────────────────────
 @requiere_permiso('reservas.editar')
 def update_acompanante(id):
-    """Edita los datos de un acompañante."""
-    data = request.json
-    error = _validar_payload(data)
+    data, _ = filtrar(request.json, CAMPOS)
+    if not data:
+        return respuestas.error('No se envió ningún campo editable', 400,
+                                codigo='SIN_CAMBIOS')
+
+    error = _validar(data)
     if error:
-        return jsonify({'error': error}), 400
+        return respuestas.error(error, 400, codigo='VALIDACION')
 
-    affected = model.update(id, data)
-    if not affected:
-        return jsonify({'error': 'Acompañante no encontrado'}), 404
+    actual = model.get_by_id(id)
+    if not actual:
+        return respuestas.error('Acompañante no encontrado', 404,
+                                codigo='NO_ENCONTRADO')
 
-    return jsonify({
-        'mensaje': 'Acompañante actualizado',
-        'acompanante': model.get_by_id(id)
-    }), 200
+    model.update(id, fusionar(actual, data, CAMPOS))
+    personas = reserva_model.sincronizar_personas(actual['reserva_id'])
+
+    return respuestas.recurso(model.get_by_id(id),
+                              mensaje='Acompañante actualizado', **personas)
 
 
-# ─── DELETE /acompanantes/<id> ────────────────────────────────────────────────
 @requiere_permiso('reservas.editar')
 def delete_acompanante(id):
-    """Elimina un acompañante por su id."""
-    affected = model.delete(id)
-    if not affected:
-        return jsonify({'error': 'Acompañante no encontrado'}), 404
+    actual = model.get_by_id(id)
+    if not actual:
+        return respuestas.error('Acompañante no encontrado', 404,
+                                codigo='NO_ENCONTRADO')
 
-    return jsonify({'mensaje': 'Acompañante eliminado'}), 200
+    model.delete(id)
+    personas = reserva_model.sincronizar_personas(actual['reserva_id'])
+
+    return respuestas.recurso(None, mensaje='Acompañante eliminado', **personas)

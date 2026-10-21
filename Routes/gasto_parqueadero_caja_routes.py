@@ -9,7 +9,7 @@ from Controllers.parqueadero_controller import (
 )
 from Controllers.cuadre_caja_controller import (
     get_all_cuadres, get_cuadre, get_cuadres_fecha,
-    create_cuadre, update_cuadre, delete_cuadre
+    create_cuadre, update_cuadre, delete_cuadre, get_resumen_dia
 )
 
 gasto_parqueadero_caja_bp = Blueprint('gasto_parqueadero_caja', __name__)
@@ -36,6 +36,7 @@ gasto_parqueadero_caja_bp.route('/parqueadero/<int:id>',             methods=['D
 gasto_parqueadero_caja_bp.route('/caja',                   methods=['GET']   )(get_all_cuadres)
 gasto_parqueadero_caja_bp.route('/caja/<int:id>',          methods=['GET']   )(get_cuadre)
 gasto_parqueadero_caja_bp.route('/caja/fecha/<fecha>',     methods=['GET']   )(get_cuadres_fecha)
+gasto_parqueadero_caja_bp.route('/caja/resumen/<fecha>',   methods=['GET']   )(get_resumen_dia)
 gasto_parqueadero_caja_bp.route('/caja',                   methods=['POST']  )(create_cuadre)
 gasto_parqueadero_caja_bp.route('/caja/<int:id>',          methods=['PUT']   )(update_cuadre)
 gasto_parqueadero_caja_bp.route('/caja/<int:id>',          methods=['DELETE'])(delete_cuadre)

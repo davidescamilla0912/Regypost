@@ -1,57 +1,60 @@
-from flask import request, jsonify
+from flask import request
+
 from Models.rol_model import RolModel
+from utils import respuestas
 from utils.decorators import requiere_permiso
 
 model = RolModel()
 
 @requiere_permiso('roles.gestionar')
 def get_all_roles():
-    return jsonify(model.get_all()), 200
+    return respuestas.lista(model.get_all())
 
 @requiere_permiso('roles.gestionar')
 def get_rol(id):
     rol = model.get_by_id(id)
     if not rol:
-        return jsonify({"error": "Rol no encontrado"}), 404
-    return jsonify(rol), 200
+        return respuestas.error('Rol no encontrado', 404, codigo='NO_ENCONTRADO')
+    return respuestas.recurso(rol)
 
 @requiere_permiso('roles.gestionar')
 def create_rol():
     data = request.json
     if not data or not data.get('nombre'):
-        return jsonify({"error": "nombre es requerido"}), 400
+        return respuestas.error('nombre es requerido', 400,
+                                codigo='CAMPOS_REQUERIDOS')
     new_id = model.create(data)
-    return jsonify({"mensaje": "Rol creado", "id": new_id}), 201
+    return respuestas.creado(model.get_by_id(new_id), mensaje='Rol creado')
 
 @requiere_permiso('roles.gestionar')
 def update_rol(id):
     data = request.json
     affected = model.update(id, data)
     if not affected:
-        return jsonify({"error": "Rol no encontrado"}), 404
-    return jsonify({"mensaje": "Rol actualizado"}), 200
+        return respuestas.error('Rol no encontrado', 404, codigo='NO_ENCONTRADO')
+    return respuestas.recurso(model.get_by_id(id), mensaje='Rol actualizado')
 
 @requiere_permiso('roles.gestionar')
 def delete_rol(id):
     affected = model.delete(id)
     if not affected:
-        return jsonify({"error": "Rol no encontrado"}), 404
-    return jsonify({"mensaje": "Rol eliminado"}), 200
+        return respuestas.error('Rol no encontrado', 404, codigo='NO_ENCONTRADO')
+    return respuestas.sin_contenido('Rol eliminado')
 
 @requiere_permiso('roles.gestionar')
 def get_permisos_rol(rol_id):
-    permisos = model.get_permisos(rol_id)
-    return jsonify(permisos), 200
+    return respuestas.lista(model.get_permisos(rol_id))
 
 @requiere_permiso('roles.gestionar')
 def asignar_permiso_rol(rol_id):
     data = request.json
     if not data or not data.get('permiso_id'):
-        return jsonify({"error": "permiso_id es requerido"}), 400
+        return respuestas.error('permiso_id es requerido', 400,
+                                codigo='CAMPOS_REQUERIDOS')
     model.asignar_permiso(rol_id, data['permiso_id'])
-    return jsonify({"mensaje": "Permiso asignado"}), 200
+    return respuestas.lista(model.get_permisos(rol_id))
 
 @requiere_permiso('roles.gestionar')
 def quitar_permiso_rol(rol_id, permiso_id):
     model.quitar_permiso(rol_id, permiso_id)
-    return jsonify({"mensaje": "Permiso removido"}), 200
+    return respuestas.lista(model.get_permisos(rol_id))

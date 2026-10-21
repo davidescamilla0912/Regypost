@@ -2,11 +2,11 @@ from flask import Blueprint, jsonify
 from Controllers.consumo_controller import (
     get_consumos_reserva, get_consumo, get_consumos_fecha,
     get_tipos_consumo, create_consumo, update_consumo, delete_consumo,
-    create_daño
+    create_dano, cobrar_consumo
 )
 from Controllers.pago_controller import (
     get_pagos, get_pagos_reserva, get_pago, get_pagos_fecha,
-    get_total_pagado, create_pago, update_pago, delete_pago
+    get_total_pagado, create_pago, update_pago, delete_pago, anular_pago
 )
 
 consumo_pago_bp = Blueprint('consumos_pagos', __name__)
@@ -18,7 +18,9 @@ consumo_pago_bp.route('/tipos-consumo',               methods=['GET'])(get_tipos
 consumo_pago_bp.route('/consumos/<int:id>',            methods=['GET']   )(get_consumo)
 consumo_pago_bp.route('/consumos/fecha/<fecha>',       methods=['GET']   )(get_consumos_fecha)
 consumo_pago_bp.route('/consumos',                     methods=['POST']  )(create_consumo)
-consumo_pago_bp.route('/consumos/daños',               methods=['POST']  )(create_daño)
+consumo_pago_bp.route('/consumos/daños',               methods=['POST']  )(create_dano)
+consumo_pago_bp.route('/consumos/danos',               methods=['POST']  )(create_dano)
+consumo_pago_bp.route('/consumos/<int:id>/cobrar',     methods=['POST']  )(cobrar_consumo)
 consumo_pago_bp.route('/consumos/<int:id>',            methods=['PUT']   )(update_consumo)
 consumo_pago_bp.route('/consumos/<int:id>',            methods=['DELETE'])(delete_consumo)
 consumo_pago_bp.route('/reservas/<int:reserva_id>/consumos', methods=['GET'])(get_consumos_reserva)
@@ -31,6 +33,7 @@ consumo_pago_bp.route('/pagos/fecha/<fecha>',          methods=['GET']   )(get_p
 consumo_pago_bp.route('/pagos',                        methods=['POST']  )(create_pago)
 consumo_pago_bp.route('/pagos/<int:id>',               methods=['PUT']   )(update_pago)
 consumo_pago_bp.route('/pagos/<int:id>',               methods=['DELETE'])(delete_pago)
+consumo_pago_bp.route('/pagos/<int:id>/anular',        methods=['POST']  )(anular_pago)
 consumo_pago_bp.route('/reservas/<int:reserva_id>/pagos',        methods=['GET'])(get_pagos_reserva)
 consumo_pago_bp.route('/reservas/<int:reserva_id>/pagos/total',  methods=['GET'])(get_total_pagado)
 

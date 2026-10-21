@@ -1,4 +1,5 @@
 from database import get_connection
+from utils.fechas import a_fecha, hoy_local
 
 class GastoModel:
 
@@ -64,15 +65,15 @@ class GastoModel:
         conn.close()
         return result
 
-    def create(self, data):
+    def create(self, data, empleado_id=None):
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO gastos (empleado_id, fecha, categoria, descripcion, monto)
             VALUES (%s, %s, %s, %s, %s)
         """, (
-            data.get('empleado_id'),
-            data['fecha'],
+            empleado_id,
+            a_fecha(data.get('fecha')) or hoy_local(),
             data.get('categoria', 'varios'),
             data.get('descripcion'),
             data['monto']
@@ -83,7 +84,7 @@ class GastoModel:
         conn.close()
         return new_id
 
-    def update(self, id, data):
+    def update(self, id, data, empleado_id=None):
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
@@ -95,8 +96,8 @@ class GastoModel:
                 monto       = %s
             WHERE id = %s
         """, (
-            data.get('empleado_id'),
-            data['fecha'],
+            empleado_id,
+            a_fecha(data.get('fecha')) or hoy_local(),
             data.get('categoria', 'varios'),
             data.get('descripcion'),
             data['monto'],
